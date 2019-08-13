@@ -19,6 +19,7 @@ public class AMQPConnector {
     String sourceName = null;
     String vantiqUrl = null;
     String vantiqToken = null;
+    String homeDir = null;
 
     private VantiqUtil vantiqUtil = new VantiqUtil();
 
@@ -34,6 +35,7 @@ public class AMQPConnector {
 
         this.vantiqUrl = connectionInfo.get(AMQPConnectorConstants.VANTIQ_URL);
         this.vantiqToken = connectionInfo.get(AMQPConnectorConstants.VANTIQ_TOKEN);
+        this.homeDir = connectionInfo.get(AMQPConnectorConstants.VANTIQ_HOME_DIR);
         this.sourceName = sourceName;
     }
 
@@ -68,6 +70,10 @@ public class AMQPConnector {
 
     public VantiqUtil getVantiqUtil() {
         return this.vantiqUtil;
+    }
+
+    public String getHomeDir() {
+        return homeDir;
     }
 
     /**

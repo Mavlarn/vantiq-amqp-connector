@@ -82,7 +82,10 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
             String protoName = topicConfig.get(PROTO_BUF_NAME);
             String className = topicConfig.get(PROTO_CLASS_NAME);
 
-            Class clazz = ProtoJavaCompilerUtil.compile(protoName, className);
+            Class clazz = ProtoJavaCompilerUtil.compile(protoName, className, connector.getHomeDir());
+            if (clazz == null) {
+                continue;
+            }
             try {
                 final Method method = clazz.getMethod("parseFrom", byte[].class);
 

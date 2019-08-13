@@ -1,12 +1,14 @@
 package io.vantiq.ext.amqpSource.proto;
 
 import com.itranswarp.compiler.JavaStringCompiler;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStream;
 import java.util.Map;
 
 public class ProtoJavaCompilerUtil {
@@ -15,13 +17,18 @@ public class ProtoJavaCompilerUtil {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProtoJavaCompilerUtil.class);
 
-    public static Class compile(String protoName, String className) {
+    public static Class compile(String protoName, String className, String homeDir) {
 
         String javaFileName = protoName + ".java";
-        String path = ProtoJavaCompilerUtil.class.getClassLoader().getResource(javaFileName).getPath();
-
         try {
-            String code = new String(Files.readAllBytes(Paths.get(path)));
+            InputStream in = ProtoJavaCompilerUtil.class.getClassLoader().getResourceAsStream(javaFileName);
+            String code;
+            if (in != null) {
+                code = IOUtils.toString(in, "utf-8");
+            } else {
+                code = IOUtils.toString(new FileReader(homeDir + File.separator + javaFileName));
+            }
+            LOG.trace("Compile java code string:{}", code);
 
             Map<String, byte[]> results = compiler.compile(javaFileName, code);
             Class<?> clazz = compiler.loadClass(className, results);
