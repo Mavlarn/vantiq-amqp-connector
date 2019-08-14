@@ -1,5 +1,7 @@
 package io.vantiq.ext;
 
+import io.vantiq.ext.amqpSource.proto.ProtoJavaCompilerUtil;
+import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +14,7 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStream;
 
 public class AMQPTest {
 
@@ -27,8 +28,13 @@ public class AMQPTest {
         admin.declareQueue(new Queue("test_name"));
         AmqpTemplate template = new RabbitTemplate(connectionFactory);
 
-        String path2 = this.getClass().getClassLoader().getResource("face.txt").getPath();
-        byte[] protoBytes = Files.readAllBytes(Paths.get(path2));
+//        String path2 = this.getClass().getClassLoader().getResource("face.txt").getPath();
+//        byte[] protoBytes = Files.readAllBytes(Paths.get(path2));
+
+        InputStream in = ProtoJavaCompilerUtil.class.getClassLoader().getResourceAsStream("face.txt");
+        byte[] protoBytes = IOUtils.toByteArray(in);
+
+
 
         template.convertAndSend("test_name", protoBytes);
 //        String foo = (String) template.receiveAndConvert("myqueue");
