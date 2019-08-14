@@ -33,7 +33,7 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
     private static final String AMQP_SERVER_HOST = "amqp_server_host";
     private static final String AMQP_SERVER_PORT = "amqp_server_port";
     private static final String AMQP_USER = "amqp_user";
-    private static final String AMQP_PASSwORD = "amqp_PASSWORD";
+    private static final String AMQP_PASSWORD = "amqp_password";
     private static final String QUEUE_NAME = "queue";
     private static final String PROTO_BUF_NAME = "proto_name";
     private static final String PROTO_CLASS_NAME = "proto_class_name";
@@ -81,7 +81,7 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
             String amqpPortStr = topicConfig.getOrDefault(AMQP_SERVER_PORT, "5672");
             int amqpPort = Integer.parseInt(amqpPortStr);
             String amqpUser = topicConfig.get(AMQP_USER);
-            String amqpPassword = topicConfig.get(AMQP_PASSwORD);
+            String amqpPassword = topicConfig.get(AMQP_PASSWORD);
 
             String queueName = topicConfig.get(QUEUE_NAME);
             String protoName = topicConfig.get(PROTO_BUF_NAME);
