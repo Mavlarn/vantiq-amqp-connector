@@ -61,4 +61,16 @@ public class AMQPTest {
 
 
     }
+
+    @Test
+    public void testByte() {
+        Object foo = "foo";
+        byte[] bar = "bar".getBytes();
+        if (foo instanceof byte[]) {
+            LOG.debug("{} is bytes", foo);
+        }
+        if (bar instanceof byte[]) {
+            LOG.debug("{} is bytes", bar);
+        }
+    }
 }

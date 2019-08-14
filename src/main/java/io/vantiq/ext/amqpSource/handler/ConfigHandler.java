@@ -18,6 +18,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.rabbit.listener.adapter.ReplyingMessageListener;
+import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -31,6 +32,8 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
     private static final String TOPICS_CONFIG = "topics";
     private static final String AMQP_SERVER_HOST = "amqp_server_host";
     private static final String AMQP_SERVER_PORT = "amqp_server_port";
+    private static final String AMQP_USER = "amqp_user";
+    private static final String AMQP_PASSwORD = "amqp_PASSWORD";
     private static final String QUEUE_NAME = "queue";
     private static final String PROTO_BUF_NAME = "proto_name";
     private static final String PROTO_CLASS_NAME = "proto_class_name";
@@ -77,6 +80,8 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
             String amqpServer = topicConfig.get(AMQP_SERVER_HOST);
             String amqpPortStr = topicConfig.getOrDefault(AMQP_SERVER_PORT, "5672");
             int amqpPort = Integer.parseInt(amqpPortStr);
+            String amqpUser = topicConfig.get(AMQP_USER);
+            String amqpPassword = topicConfig.get(AMQP_PASSwORD);
 
             String queueName = topicConfig.get(QUEUE_NAME);
             String protoName = topicConfig.get(PROTO_BUF_NAME);
@@ -93,8 +98,12 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
 
 
                 CachingConnectionFactory connectionFactory = new CachingConnectionFactory(amqpServer, amqpPort);
-                // connectionFactory.setUsername();
-                // connectionFactory.setPassword();
+                if(StringUtils.hasText(amqpUser)) {
+                    connectionFactory.setUsername(amqpUser);
+                }
+                if(StringUtils.hasText(amqpPassword)) {
+                    connectionFactory.setPassword(amqpPassword);
+                }
 
                 AmqpAdmin admin = new RabbitAdmin(connectionFactory);
                 admin.declareQueue(new Queue(queueName));
@@ -109,6 +118,9 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
                     @Override
                     public Object handleMessage(Object o) {
                         LOG.debug("Got amqp message:{}", o);
+                        if (o instanceof byte[]) {
+                            return null;
+                        }
 
                         try {
                             Object objData = method.invoke(clazz, (byte[])o);
