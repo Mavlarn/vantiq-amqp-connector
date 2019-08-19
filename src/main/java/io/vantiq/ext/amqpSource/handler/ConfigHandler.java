@@ -108,20 +108,21 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
                     public Object handleMessage(Object o) {
                         LOG.debug("Got amqp message:{}", o);
                         if (o instanceof byte[]) {
+
+
+                            try {
+                                Object objData = method.invoke(clazz, (byte[]) o);
+                                String asJson = jsonFormat.printToString((Message) objData);
+                                Map data = om.readValue(asJson, Map.class);
+                                LOG.debug("result json string: {}", data);
+                                connector.getVantiqClient().sendNotification(data);
+
+                            } catch (Exception e) {
+                                LOG.error(e.getMessage(), e);
+                            }
+                        } else {
                             return null;
                         }
-
-                        try {
-                            Object objData = method.invoke(clazz, (byte[])o);
-                            String asJson = jsonFormat.printToString((Message) objData);
-                            Map data = om.readValue(asJson, Map.class);
-                            LOG.debug("result json string: {}", data);
-                            connector.getVantiqClient().sendNotification(data);
-
-                        } catch (Exception e) {
-                            LOG.error(e.getMessage(), e);
-                        }
-                        return null;
                     }
                 }));
                 container.start();
