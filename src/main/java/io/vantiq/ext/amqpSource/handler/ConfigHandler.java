@@ -9,12 +9,7 @@ import io.vantiq.ext.sdk.ExtensionServiceMessage;
 import io.vantiq.ext.sdk.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.rabbit.listener.adapter.ReplyingMessageListener;
@@ -104,12 +99,6 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
                 if(StringUtils.hasText(amqpPassword)) {
                     connectionFactory.setPassword(amqpPassword);
                 }
-
-                AmqpAdmin admin = new RabbitAdmin(connectionFactory);
-                admin.declareQueue(new Queue(queueName));
-                AmqpTemplate template = new RabbitTemplate(connectionFactory);
-                template.convertAndSend(queueName, "foo");
-
 
                 SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
                 container.setConnectionFactory(connectionFactory);
