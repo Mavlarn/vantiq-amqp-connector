@@ -23,7 +23,11 @@ public class AMQPTest {
     @Test
     public void test1() throws IOException {
 
-        ConnectionFactory connectionFactory = new CachingConnectionFactory();
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+
+        // if need password
+//        connectionFactory.setUsername("the_user");
+//        connectionFactory.setPassword("amqpPassword");
         AmqpAdmin admin = new RabbitAdmin(connectionFactory);
         admin.declareQueue(new Queue("test_name"));
         AmqpTemplate template = new RabbitTemplate(connectionFactory);
