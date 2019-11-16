@@ -28,14 +28,13 @@ vantiq -s <profileName> load sourceimpls amqpSource.json
 In VANTIQ, you should see a new Source type named *AMQPProtoSource*, create a new source with this type, and config:
 ```
 {
-	"topics": [
-      {
-        "queue": "test_name",
-        "amqp_server_host": "localhost",
-        "proto_name": "Face",
-        "proto_class_name": "Face$FACE_DETECT_MESSAGE"
-      }
-    ]
+    "amqp_server_host": "localhost",
+    "amqp_server_port": "5672",
+    "amqp_user": "username",
+    "amqp_password": "thePassword",
+    "queue": "test_name",
+    "proto_name": "Face",
+    "proto_class_name": "Face$FACE_DETECT_MESSAGE"
 }
 ```
 

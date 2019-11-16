@@ -32,14 +32,24 @@ public class PublishHandler extends Handler<ExtensionServiceMessage> {
                     "Request must be a map", null);
         }
 
-        Map<String, String> request = (Map<String, String>) message.getObject();
+        Map<String, ?> request = (Map<String, ?>) message.getObject();
 
-        startJob(request, replyAddress);
+        publish(request);
 
     }
 
-    private void startJob(Map<String, String> request, String replyAddress) {
-        LOG.warn("NOT support publish for now.");
+    private void publish(Map<String, ?> request) {
+
+        // Gather query results, or send a query error if an exception is caught
+        try {
+            String topic = (String)request.get("topic");
+            Object message = request.get("message");
+            this.connector.getAmqpTemplate().convertAndSend(topic, message);
+            LOG.trace("Sent message: ", message);
+        } catch (Exception e) {
+            LOG.error("An unexpected error occurred when executing publish.", e);
+            LOG.error("Request was: {}", request);
+        }
     }
 
 }

@@ -9,14 +9,15 @@ import io.vantiq.ext.sdk.ExtensionServiceMessage;
 import io.vantiq.ext.sdk.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.rabbit.listener.adapter.ReplyingMessageListener;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Map;
 
 public class ConfigHandler extends Handler<ExtensionServiceMessage> {
@@ -24,7 +25,6 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
     static final Logger LOG = LoggerFactory.getLogger(AMQPConnector.class);
 
     private static final String CONFIG = "config";
-    private static final String TOPICS_CONFIG = "topics";
     private static final String AMQP_SERVER_HOST = "amqp_server_host";
     private static final String AMQP_SERVER_PORT = "amqp_server_port";
     private static final String AMQP_USER = "amqp_user";
@@ -35,7 +35,6 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
 
 
     private AMQPConnector connector;
-
     private ObjectMapper om = new ObjectMapper();
 
     public ConfigHandler(AMQPConnector connector) {
@@ -54,8 +53,7 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
     public void handleMessage(ExtensionServiceMessage message) {
         LOG.warn("No configuration need for source:{}", message.getSourceName());
         Map<String, Object> configObject = (Map) message.getObject();
-        Map<String, Object> config;
-        List<Map<String, String>> topicsConfig;
+        Map<String, String> topicConfig;
 
         // Obtain entire config from the message object
         if ( !(configObject.get(CONFIG) instanceof Map)) {
@@ -63,72 +61,76 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
             failConfig();
             return;
         }
-        config = (Map) configObject.get(CONFIG);
-        if ( !(config.get(TOPICS_CONFIG) instanceof List)) {
-            LOG.error("Configuration failed. No configuration suitable for AMQP Connector.");
-            failConfig();
-            return;
-        }
+        topicConfig = (Map) configObject.get(CONFIG);
 
-        topicsConfig = (List) config.get(TOPICS_CONFIG);
-        for(Map<String, String> topicConfig: topicsConfig) {
-            String amqpServer = topicConfig.get(AMQP_SERVER_HOST);
-            String amqpPortStr = topicConfig.getOrDefault(AMQP_SERVER_PORT, "5672");
-            int amqpPort = Integer.parseInt(amqpPortStr);
-            String amqpUser = topicConfig.get(AMQP_USER);
-            String amqpPassword = topicConfig.get(AMQP_PASSWORD);
+        String amqpServer = topicConfig.get(AMQP_SERVER_HOST);
+        String amqpPortStr = topicConfig.getOrDefault(AMQP_SERVER_PORT, "5672");
+        int amqpPort = Integer.parseInt(amqpPortStr);
+        String amqpUser = topicConfig.get(AMQP_USER);
+        String amqpPassword = topicConfig.get(AMQP_PASSWORD);
 
-            String queueName = topicConfig.get(QUEUE_NAME);
-            String protoName = topicConfig.get(PROTO_BUF_NAME);
-            String className = topicConfig.get(PROTO_CLASS_NAME);
+        String queueName = topicConfig.get(QUEUE_NAME);
+        String protoName = topicConfig.get(PROTO_BUF_NAME);
+        String className = topicConfig.get(PROTO_CLASS_NAME);
 
-            Class clazz = ProtoJavaCompilerUtil.compile(protoName, className, connector.getHomeDir());
-            if (clazz == null) {
-                continue;
+        try {
+            final Class clazz;
+            final Method method;
+            if (!StringUtils.isEmpty(protoName)) {
+                clazz = ProtoJavaCompilerUtil.compile(protoName, className, connector.getHomeDir());
+                if (clazz == null) {
+                    LOG.error("ProtoBuf class compile error.");
+                    return;
+                }
+                method = clazz.getMethod("parseFrom", byte[].class);
+            } else {
+                clazz = null;
+                method = null;
             }
-            try {
-                final Method method = clazz.getMethod("parseFrom", byte[].class);
 
-                JsonFormat jsonFormat = new JsonFormat();
+            JsonFormat jsonFormat = new JsonFormat();
 
+            CachingConnectionFactory connectionFactory = new CachingConnectionFactory(amqpServer, amqpPort);
+            if(StringUtils.hasText(amqpUser)) {
+                connectionFactory.setUsername(amqpUser);
+            }
+            if(StringUtils.hasText(amqpPassword)) {
+                connectionFactory.setPassword(amqpPassword);
+            }
 
-                CachingConnectionFactory connectionFactory = new CachingConnectionFactory(amqpServer, amqpPort);
-                if(StringUtils.hasText(amqpUser)) {
-                    connectionFactory.setUsername(amqpUser);
-                }
-                if(StringUtils.hasText(amqpPassword)) {
-                    connectionFactory.setPassword(amqpPassword);
-                }
-
-                SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-                container.setConnectionFactory(connectionFactory);
-                container.setQueueNames(queueName);
-                container.setMessageListener(new MessageListenerAdapter(new ReplyingMessageListener() {
-                    @Override
-                    public Object handleMessage(Object o) {
-                        LOG.debug("Got amqp message:{}", o);
-                        if (o instanceof byte[]) {
-                            try {
-                                Object objData = method.invoke(clazz, (byte[]) o);
-                                String asJson = jsonFormat.printToString((Message) objData);
-                                Map data = om.readValue(asJson, Map.class);
-                                LOG.debug("result json string: {}", data);
-                                connector.getVantiqClient().sendNotification(data);
-                            } catch (Exception e) {
-                                LOG.error(e.getMessage(), e);
-                            }
-                        }
-                        return null;
+            SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+            container.setConnectionFactory(connectionFactory);
+            container.setQueueNames(queueName);
+            container.setMessageListener(new MessageListenerAdapter((ReplyingMessageListener) o -> {
+                LOG.debug("Got amqp message:{}", o);
+                try {
+                    if (o instanceof byte[] && method != null) {
+                        Object objData = method.invoke(clazz, (byte[]) o);
+                        String asJson = jsonFormat.printToString((Message) objData);
+                        Map data = om.readValue(asJson, Map.class);
+                        LOG.debug("result json string: {}", data);
+                        connector.getVantiqClient().sendNotification(data);
+                    } else if (o instanceof String) {
+                        Map data = om.readValue((String)o, Map.class);
+                        LOG.debug("result json string: {}", data);
+                        connector.getVantiqClient().sendNotification(data);
                     }
-                }));
-                container.start();
+                } catch (Exception e) {
+                    LOG.error(e.getMessage(), e);
+                }
+                return null;
+            }));
+            container.start();
+            AmqpTemplate template = new RabbitTemplate(connectionFactory);
+            this.connector.setAmqpTemplate(template);
+            this.connector.setMqListener(container);
 
-            } catch (NoSuchMethodException e) {
-                LOG.error(e.getMessage(), e);
-            }
-
-
+        } catch (NoSuchMethodException e) {
+            LOG.error(e.getMessage(), e);
         }
+
+
+
 
 
 

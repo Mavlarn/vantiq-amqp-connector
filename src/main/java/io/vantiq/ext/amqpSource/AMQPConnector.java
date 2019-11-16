@@ -4,10 +4,14 @@ import io.vantiq.ext.amqpSource.handler.*;
 import io.vantiq.ext.sdk.ExtensionWebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static io.vantiq.ext.amqpSource.AMQPConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
 import static io.vantiq.ext.amqpSource.AMQPConnectorConstants.RECONNECT_INTERVAL;
@@ -20,6 +24,9 @@ public class AMQPConnector {
     String vantiqUrl = null;
     String vantiqToken = null;
     String homeDir = null;
+
+    AmqpTemplate amqpTemplate = null;
+    SimpleMessageListenerContainer mqListener = null;
 
     private VantiqUtil vantiqUtil = new VantiqUtil();
 
@@ -74,6 +81,22 @@ public class AMQPConnector {
 
     public String getHomeDir() {
         return homeDir;
+    }
+
+    public SimpleMessageListenerContainer getMqListener() {
+        return mqListener;
+    }
+
+    public void setMqListener(SimpleMessageListenerContainer mqListener) {
+        this.mqListener = mqListener;
+    }
+
+    public AmqpTemplate getAmqpTemplate() {
+        return amqpTemplate;
+    }
+
+    public void setAmqpTemplate(AmqpTemplate amqpTemplate) {
+        this.amqpTemplate = amqpTemplate;
     }
 
     /**
