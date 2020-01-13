@@ -1,6 +1,6 @@
 {
-    "vantiqUrl": "http://localhost:8080",
-    "token": "CJEyQR8nFMz8M0s8HGvcAGkqsjfK_16UbhzdjhEXNMo=",
-    "sourceName": "amqp_proto_source",
+    "vantiqUrl": "https://dev.vantiq.com.cn",
+    "token": "R6unzwIh4fo_V4q7ZaxrtPQ5EpWWrjz5bDmmymawOlc=",
+    "sourceName": "amqp_1_0_source",
     "homeDir": ""
 }

@@ -53,7 +53,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.9</version>
+            <version>2.9.10.1</version>
         </dependency>
         <!--<dependency>-->
             <!--<groupId>com.fasterxml.jackson.datatype</groupId>-->
@@ -70,24 +70,6 @@
             <!--<artifactId>jackson-databind</artifactId>-->
             <!--<version>2.9.9</version>-->
         <!--</dependency>-->
-
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>3.5.1</version>
-        </dependency>
-        <dependency>
-            <groupId>com.googlecode.protobuf-java-format</groupId>
-            <artifactId>protobuf-java-format</artifactId>
-            <version>1.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.itranswarp</groupId>
-            <artifactId>compiler</artifactId>
-            <version>1.0</version>
-        </dependency>
-
 
         <dependency>
             <groupId>junit</groupId>
@@ -114,7 +96,7 @@
                     <!-- MainClass in mainfest make a executable jar -->
                     <archive>
                         <manifest>
-                            <mainClass>io.vantiq.ext.amqpSource.AMQPConnectorMain</mainClass>
+                            <mainClass>io.vantiq.ext.amqp.AMQPConnectorMain</mainClass>
                         </manifest>
                     </archive>
 
@@ -141,7 +123,7 @@
                         <!--<configuration>-->
                             <!--<classifier>spring-boot</classifier>-->
                             <!--<mainClass>-->
-                                <!--io.vantiq.ext.amqpSource.AMQPConnectorMain-->
+                                <!--io.vantiq.ext.amqp.AMQPConnectorMain-->
                             <!--</mainClass>-->
                         <!--</configuration>-->
                     <!--</execution>-->

@@ -1,6 +1,6 @@
-package io.vantiq.ext.amqpSource;
+package io.vantiq.ext.amqp;
 
-import io.vantiq.ext.amqpSource.handler.*;
+import io.vantiq.ext.amqp.handler.*;
 import io.vantiq.ext.sdk.ExtensionWebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,28 +9,26 @@ import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static io.vantiq.ext.amqpSource.AMQPConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
-import static io.vantiq.ext.amqpSource.AMQPConnectorConstants.RECONNECT_INTERVAL;
+import static io.vantiq.ext.amqp.ConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
+import static io.vantiq.ext.amqp.ConnectorConstants.RECONNECT_INTERVAL;
 
 public class AMQPConnector {
 
     static final Logger LOG = LoggerFactory.getLogger(AMQPConnector.class);
+
     ExtensionWebSocketClient vantiqClient = null;
-    String sourceName = null;
-    String vantiqUrl = null;
-    String vantiqToken = null;
-    String homeDir = null;
+    String sourceName;
+    String vantiqUrl;
+    String vantiqToken;
+    String homeDir;
 
     AmqpTemplate amqpTemplate = null;
     SimpleMessageListenerContainer mqListener = null;
 
     private VantiqUtil vantiqUtil = new VantiqUtil();
-
-    private static Map<String, Map> configurations = new ConcurrentHashMap<String, Map>();
 
     public AMQPConnector(String sourceName, Map<String, String> connectionInfo) {
         if (connectionInfo == null) {
@@ -40,24 +38,25 @@ public class AMQPConnector {
             throw new RuntimeException("No source name provided");
         }
 
-        this.vantiqUrl = connectionInfo.get(AMQPConnectorConstants.VANTIQ_URL);
-        this.vantiqToken = connectionInfo.get(AMQPConnectorConstants.VANTIQ_TOKEN);
-        this.homeDir = connectionInfo.get(AMQPConnectorConstants.VANTIQ_HOME_DIR);
+        this.vantiqUrl = connectionInfo.get(ConnectorConstants.VANTIQ_URL);
+        this.vantiqToken = connectionInfo.get(ConnectorConstants.VANTIQ_TOKEN);
+        this.homeDir = connectionInfo.get(ConnectorConstants.VANTIQ_HOME_DIR);
         this.sourceName = sourceName;
     }
 
 
     public void start() throws IOException {
+
+        vantiqClient = new ExtensionWebSocketClient(sourceName);
+
+        vantiqClient.setConfigHandler(new ConfigHandler(this));
+        vantiqClient.setReconnectHandler(new ReconnectHandler(this));
+        vantiqClient.setCloseHandler(new CloseHandler(this));
+        vantiqClient.setPublishHandler(new PublishHandler(this));
+        vantiqClient.setQueryHandler(new QueryHandler(this));
+
         boolean sourcesSucceeded = false;
         while (!sourcesSucceeded) {
-            vantiqClient = new ExtensionWebSocketClient(sourceName);
-
-            vantiqClient.setConfigHandler(new ConfigHandler(this));
-            vantiqClient.setReconnectHandler(new ReconnectHandler(this));
-            vantiqClient.setCloseHandler(new CloseHandler(this));
-            vantiqClient.setPublishHandler(new PublishHandler(this));
-            vantiqClient.setQueryHandler(new QueryHandler(this));
-
             vantiqClient.initiateFullConnection(vantiqUrl, vantiqToken);
 
             sourcesSucceeded = checkConnectionFails(vantiqClient, CONNECTOR_CONNECT_TIMEOUT);
@@ -81,6 +80,18 @@ public class AMQPConnector {
 
     public String getHomeDir() {
         return homeDir;
+    }
+
+    public String getSourceName() {
+        return sourceName;
+    }
+
+    public String getVantiqUrl() {
+        return vantiqUrl;
+    }
+
+    public String getVantiqToken() {
+        return vantiqToken;
     }
 
     public SimpleMessageListenerContainer getMqListener() {
@@ -107,7 +118,7 @@ public class AMQPConnector {
      * @param timeout   The maximum number of seconds to wait before assuming failure and stopping
      * @return          true if the connection succeeded, false if it failed to connect within {@code timeout} seconds.
      */
-    private boolean checkConnectionFails(ExtensionWebSocketClient client, int timeout) {
+    public boolean checkConnectionFails(ExtensionWebSocketClient client, int timeout) {
         boolean sourcesSucceeded = false;
         try {
             sourcesSucceeded = client.getSourceConnectionFuture().get(timeout, TimeUnit.SECONDS);

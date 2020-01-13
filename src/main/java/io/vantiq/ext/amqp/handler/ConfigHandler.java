@@ -1,10 +1,7 @@
-package io.vantiq.ext.amqpSource.handler;
+package io.vantiq.ext.amqp.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.Message;
-import com.googlecode.protobuf.format.JsonFormat;
-import io.vantiq.ext.amqpSource.AMQPConnector;
-import io.vantiq.ext.amqpSource.proto.ProtoJavaCompilerUtil;
+import io.vantiq.ext.amqp.AMQPConnector;
 import io.vantiq.ext.sdk.ExtensionServiceMessage;
 import io.vantiq.ext.sdk.Handler;
 import org.slf4j.Logger;
@@ -17,7 +14,6 @@ import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.rabbit.listener.adapter.ReplyingMessageListener;
 import org.springframework.util.StringUtils;
 
-import java.lang.reflect.Method;
 import java.util.Map;
 
 public class ConfigHandler extends Handler<ExtensionServiceMessage> {
@@ -70,70 +66,38 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
         String amqpPassword = topicConfig.get(AMQP_PASSWORD);
 
         String queueName = topicConfig.get(QUEUE_NAME);
-        String protoName = topicConfig.get(PROTO_BUF_NAME);
-        String className = topicConfig.get(PROTO_CLASS_NAME);
 
-        try {
-            final Class clazz;
-            final Method method;
-            if (!StringUtils.isEmpty(protoName)) {
-                clazz = ProtoJavaCompilerUtil.compile(protoName, className, connector.getHomeDir());
-                if (clazz == null) {
-                    LOG.error("ProtoBuf class compile error.");
-                    return;
-                }
-                method = clazz.getMethod("parseFrom", byte[].class);
-            } else {
-                clazz = null;
-                method = null;
-            }
 
-            JsonFormat jsonFormat = new JsonFormat();
-
-            CachingConnectionFactory connectionFactory = new CachingConnectionFactory(amqpServer, amqpPort);
-            if(StringUtils.hasText(amqpUser)) {
-                connectionFactory.setUsername(amqpUser);
-            }
-            if(StringUtils.hasText(amqpPassword)) {
-                connectionFactory.setPassword(amqpPassword);
-            }
-
-            SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-            container.setConnectionFactory(connectionFactory);
-            container.setQueueNames(queueName);
-            container.setMessageListener(new MessageListenerAdapter((ReplyingMessageListener) o -> {
-                LOG.debug("Got amqp message:{}", o);
-                try {
-                    if (o instanceof byte[] && method != null) {
-                        Object objData = method.invoke(clazz, (byte[]) o);
-                        String asJson = jsonFormat.printToString((Message) objData);
-                        Map data = om.readValue(asJson, Map.class);
-                        LOG.debug("result json string: {}", data);
-                        connector.getVantiqClient().sendNotification(data);
-                    } else if (o instanceof String) {
-                        Map data = om.readValue((String)o, Map.class);
-                        LOG.debug("result json string: {}", data);
-                        connector.getVantiqClient().sendNotification(data);
-                    }
-                } catch (Exception e) {
-                    LOG.error(e.getMessage(), e);
-                }
-                return null;
-            }));
-            container.start();
-            AmqpTemplate template = new RabbitTemplate(connectionFactory);
-            this.connector.setAmqpTemplate(template);
-            this.connector.setMqListener(container);
-
-        } catch (NoSuchMethodException e) {
-            LOG.error(e.getMessage(), e);
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(amqpServer, amqpPort);
+        if(StringUtils.hasText(amqpUser)) {
+            connectionFactory.setUsername(amqpUser);
+        }
+        if(StringUtils.hasText(amqpPassword)) {
+            connectionFactory.setPassword(amqpPassword);
         }
 
-
-
-
-
-
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+        container.setQueueNames(queueName);
+        container.setMessageListener(new MessageListenerAdapter((ReplyingMessageListener) o -> {
+            try {
+                if (o instanceof String) {
+                    Map data = om.readValue((String)o, Map.class);
+                    LOG.debug("result json string: {}", data);
+                    connector.getVantiqClient().sendNotification(data);
+                } else {
+                    LOG.debug("result object: {}", o);
+                    connector.getVantiqClient().sendNotification(o);
+                }
+            } catch (Exception e) {
+                LOG.error(e.getMessage(), e);
+            }
+            return null;
+        }));
+        container.start();
+        AmqpTemplate template = new RabbitTemplate(connectionFactory);
+        this.connector.setAmqpTemplate(template);
+        this.connector.setMqListener(container);
 
     }
 

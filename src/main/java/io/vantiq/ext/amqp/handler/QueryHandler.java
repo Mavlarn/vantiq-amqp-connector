@@ -1,6 +1,6 @@
-package io.vantiq.ext.amqpSource.handler;
+package io.vantiq.ext.amqp.handler;
 
-import io.vantiq.ext.amqpSource.AMQPConnector;
+import io.vantiq.ext.amqp.AMQPConnector;
 import io.vantiq.ext.sdk.ExtensionServiceMessage;
 import io.vantiq.ext.sdk.Handler;
 import org.slf4j.Logger;

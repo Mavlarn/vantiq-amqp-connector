@@ -1,4 +1,4 @@
-package io.vantiq.ext.amqpSource;
+package io.vantiq.ext.amqp;
 
 import io.vantiq.ext.sdk.ExtensionWebSocketClient;
 

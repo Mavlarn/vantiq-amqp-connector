@@ -1,6 +1,6 @@
-package io.vantiq.ext.amqpSource;
+package io.vantiq.ext.amqp;
 
-import io.vantiq.ext.amqpSource.handler.PublishHandler;
+import io.vantiq.ext.amqp.handler.PublishHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
