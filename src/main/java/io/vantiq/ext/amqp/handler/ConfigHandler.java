@@ -81,7 +81,7 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
         container.setQueueNames(queueName);
         container.setMessageListener(new MessageListenerAdapter((ReplyingMessageListener) o -> {
             try {
-                if (o instanceof String) {
+                if (o instanceof String && ((String) o).trim().startsWith("{")) {
                     Map data = om.readValue((String)o, Map.class);
                     LOG.debug("result json string: {}", data);
                     connector.getVantiqClient().sendNotification(data);
