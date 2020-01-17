@@ -12,7 +12,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.vantiq.ext.amqp.ConnectorConstants.*;
+import static io.vantiq.ext.sdk.ConnectorConstants.*;
 
 
 public class AbstractConnectorMain {

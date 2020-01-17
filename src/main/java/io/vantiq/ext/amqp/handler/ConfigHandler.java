@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class ConfigHandler extends Handler<ExtensionServiceMessage> {
 
-    static final Logger LOG = LoggerFactory.getLogger(AMQPConnector.class);
+    static final Logger LOG = LoggerFactory.getLogger(ConfigHandler.class);
 
     private static final String CONFIG = "config";
     private static final String AMQP_SERVER_HOST = "amqp_server_host";
@@ -26,8 +26,6 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
     private static final String AMQP_USER = "amqp_user";
     private static final String AMQP_PASSWORD = "amqp_password";
     private static final String QUEUE_NAME = "queue";
-    private static final String PROTO_BUF_NAME = "proto_name";
-    private static final String PROTO_CLASS_NAME = "proto_class_name";
 
 
     private AMQPConnector connector;
@@ -38,16 +36,12 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
     }
 
     /**
-     * topics: [
-     *  {
-     *      queue: "topic1", protobuf_name: "face"
-     *  }
-     * ]
+     *
      * @param message   A message to be handled
      */
     @Override
     public void handleMessage(ExtensionServiceMessage message) {
-        LOG.warn("No configuration need for source:{}", message.getSourceName());
+        LOG.info("Configuration for source:{}", message.getSourceName());
         Map<String, Object> configObject = (Map) message.getObject();
         Map<String, String> topicConfig;
 

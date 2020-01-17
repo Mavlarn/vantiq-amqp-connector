@@ -22,7 +22,7 @@ public class PublishHandler extends Handler<ExtensionServiceMessage> {
 
     @Override
     public void handleMessage(ExtensionServiceMessage message) {
-        LOG.info("Publish called with message " + message.toString());
+        LOG.debug("Publish with message " + message.toString());
 
         String replyAddress = ExtensionServiceMessage.extractReplyAddress(message);
         ExtensionWebSocketClient client = connector.getVantiqClient();

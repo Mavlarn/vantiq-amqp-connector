@@ -1,17 +1,16 @@
 package io.vantiq.ext.amqp;
 
 import io.vantiq.ext.sdk.AbstractConnectorMain;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
 
-import java.io.IOException;
 import java.util.Map;
 
-import static io.vantiq.ext.amqp.ConnectorConstants.*;
+import static io.vantiq.ext.sdk.ConnectorConstants.VANTIQ_SOURCE_NAME;
 
 
 public class AMQPConnectorMain extends AbstractConnectorMain {
 
-    public static void main(String[] argv) throws IOException {
+    public static void main(String[] argv) {
 
         CommandLine cmd = parseCommand(argv);
         Map<String, String> connectInfo = constructConfig(cmd);

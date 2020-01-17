@@ -1,19 +1,19 @@
 package io.vantiq.ext.amqp;
 
 import io.vantiq.ext.amqp.handler.*;
+import io.vantiq.ext.sdk.ConnectorConstants;
 import io.vantiq.ext.sdk.ExtensionWebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static io.vantiq.ext.amqp.ConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
-import static io.vantiq.ext.amqp.ConnectorConstants.RECONNECT_INTERVAL;
+import static io.vantiq.ext.sdk.ConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
+import static io.vantiq.ext.sdk.ConnectorConstants.RECONNECT_INTERVAL;
 
 public class AMQPConnector {
 
@@ -45,8 +45,7 @@ public class AMQPConnector {
     }
 
 
-    public void start() throws IOException {
-
+    public void start() {
         vantiqClient = new ExtensionWebSocketClient(sourceName);
 
         vantiqClient.setConfigHandler(new ConfigHandler(this));

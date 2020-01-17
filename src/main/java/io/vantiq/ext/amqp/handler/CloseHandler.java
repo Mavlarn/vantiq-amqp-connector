@@ -7,8 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 
-import static io.vantiq.ext.amqp.ConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
-import static io.vantiq.ext.amqp.ConnectorConstants.RECONNECT_INTERVAL;
+import static io.vantiq.ext.sdk.ConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
+import static io.vantiq.ext.sdk.ConnectorConstants.RECONNECT_INTERVAL;
 
 public class CloseHandler extends Handler<ExtensionWebSocketClient> {
 

@@ -1,6 +1,7 @@
 package io.vantiq.ext.amqp.handler;
 
 import io.vantiq.ext.amqp.AMQPConnector;
+import io.vantiq.ext.sdk.ConnectorConstants;
 import io.vantiq.ext.sdk.ExtensionServiceMessage;
 import io.vantiq.ext.sdk.ExtensionWebSocketClient;
 import io.vantiq.ext.sdk.Handler;
@@ -14,22 +15,22 @@ import java.util.concurrent.TimeoutException;
 
 public class ReconnectHandler extends Handler<ExtensionServiceMessage> {
 
-    static final Logger LOG = LoggerFactory.getLogger(PublishHandler.class);
+    static final Logger LOG = LoggerFactory.getLogger(ReconnectHandler.class);
 
-    private AMQPConnector extension;
+    private AMQPConnector connector;
 
     public ReconnectHandler(AMQPConnector extension) {
-        this.extension = extension;
+        this.connector = connector;
     }
 
     @Override
     public void handleMessage(ExtensionServiceMessage message) {
 
-        ExtensionWebSocketClient client = extension.getVantiqClient();
+        ExtensionWebSocketClient client = connector.getVantiqClient();
         CompletableFuture<Boolean> success = client.connectToSource();
 
         try {
-            if ( !success.get(10, TimeUnit.SECONDS) ) {
+            if ( !success.get(ConnectorConstants.CONNECTOR_CONNECT_TIMEOUT, TimeUnit.SECONDS) ) {
                 if (!client.isOpen()) {
                     LOG.error("Failed to connect to server url.");
                 } else if (!client.isAuthed()) {

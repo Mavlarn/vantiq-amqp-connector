@@ -14,21 +14,26 @@ package io.vantiq.ext.sdk;
 
 // For decoding of the messages received
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-// WebSocket imports
-import okhttp3.*;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.ws.WebSocket;
 import okhttp3.ws.WebSocketCall;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.X509TrustManager;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+// WebSocket imports
 // Logging
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A client that handles the WebSocket connection with a Vantiq deployment, for the purposes of Extension sources.
@@ -157,13 +162,26 @@ public class ExtensionWebSocketClient {
             webSocketFuture = new CompletableFuture<>();
 
             // Start the connection attempt
-            OkHttpClient client = new OkHttpClient.Builder()
-                    .readTimeout(0, TimeUnit.MILLISECONDS)
-                    .writeTimeout(0, TimeUnit.MILLISECONDS)
-                    .build();
-            WebSocketCall.create(client, new Request.Builder()
-                    .url(validifyUrl(url))
-                    .build()).enqueue(listener);
+
+            try {
+                SSLContext sc = SSLContext.getInstance("TLS");
+                X509TrustManager[] trustAllCerts = new X509TrustManager[]{
+                        new SelfSignTrustManager()
+                };
+                sc.init(null, trustAllCerts, null);
+                OkHttpClient client = new OkHttpClient.Builder()
+                        .sslSocketFactory(sc.getSocketFactory(), trustAllCerts[0])
+                        .readTimeout(0, TimeUnit.MILLISECONDS)
+                        .writeTimeout(0, TimeUnit.MILLISECONDS)
+                        .pingInterval(30, TimeUnit.SECONDS)
+                        .build();
+
+                WebSocketCall.create(client, new Request.Builder()
+                        .url(validifyUrl(url))
+                        .build()).enqueue(listener);
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                log.error("Connection error:" + e.getMessage(), e);
+            }
         }
         return webSocketFuture;
     }
