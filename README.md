@@ -32,9 +32,7 @@ In VANTIQ, you should see a new Source type named *AMQPProtoSource*, create a ne
     "amqp_server_port": "5672",
     "amqp_user": "username",
     "amqp_password": "thePassword",
-    "queue": "test_name",
-    "proto_name": "Face",
-    "proto_class_name": "Face$FACE_DETECT_MESSAGE"
+    "queue": "test_name"
 }
 ```
 
