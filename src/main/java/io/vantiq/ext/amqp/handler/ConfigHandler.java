@@ -2,8 +2,9 @@ package io.vantiq.ext.amqp.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vantiq.ext.amqp.AMQPConnector;
-import io.vantiq.ext.sdk.ExtensionServiceMessage;
-import io.vantiq.ext.sdk.Handler;
+import io.vantiq.ext.amqp.AMQPConnectorConfig;
+import io.vantiq.extjsdk.ExtensionServiceMessage;
+import io.vantiq.extjsdk.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -21,12 +22,6 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
     static final Logger LOG = LoggerFactory.getLogger(ConfigHandler.class);
 
     private static final String CONFIG = "config";
-    private static final String AMQP_SERVER_HOST = "amqp_server_host";
-    private static final String AMQP_SERVER_PORT = "amqp_server_port";
-    private static final String AMQP_USER = "amqp_user";
-    private static final String AMQP_PASSWORD = "amqp_password";
-    private static final String QUEUE_NAME = "queue";
-
 
     private AMQPConnector connector;
     private ObjectMapper om = new ObjectMapper();
@@ -52,27 +47,20 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
             return;
         }
         topicConfig = (Map) configObject.get(CONFIG);
-
-        String amqpServer = topicConfig.get(AMQP_SERVER_HOST);
-        String amqpPortStr = topicConfig.getOrDefault(AMQP_SERVER_PORT, "5672");
-        int amqpPort = Integer.parseInt(amqpPortStr);
-        String amqpUser = topicConfig.get(AMQP_USER);
-        String amqpPassword = topicConfig.get(AMQP_PASSWORD);
-
-        String queueName = topicConfig.get(QUEUE_NAME);
+        AMQPConnectorConfig config = AMQPConnectorConfig.fromMap(topicConfig);
 
 
-        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(amqpServer, amqpPort);
-        if(StringUtils.hasText(amqpUser)) {
-            connectionFactory.setUsername(amqpUser);
+        CachingConnectionFactory connectionFactory = new CachingConnectionFactory(config.getAmqpServer(), config.getAmqpPort());
+        if(StringUtils.hasText(config.getAmqpUser())) {
+            connectionFactory.setUsername(config.getAmqpUser());
         }
-        if(StringUtils.hasText(amqpPassword)) {
-            connectionFactory.setPassword(amqpPassword);
+        if(StringUtils.hasText(config.getAmqpPassword())) {
+            connectionFactory.setPassword(config.getAmqpPassword());
         }
 
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.setQueueNames(queueName);
+        container.setQueueNames(config.getQueueName());
         container.setMessageListener(new MessageListenerAdapter((ReplyingMessageListener) o -> {
             try {
                 if (o instanceof String && ((String) o).trim().startsWith("{")) {
@@ -101,7 +89,7 @@ public class ConfigHandler extends Handler<ExtensionServiceMessage> {
      * configuration document) or to the WebSocket connection crashing momentarily.
      */
     private void failConfig() {
-//        connector.close();
+        connector.close();
     }
 
 }

@@ -1,14 +1,15 @@
 package io.vantiq.ext.amqp.handler;
 
 import io.vantiq.ext.amqp.AMQPConnector;
-import io.vantiq.ext.sdk.ExtensionWebSocketClient;
-import io.vantiq.ext.sdk.Handler;
+import io.vantiq.extjsdk.ExtensionWebSocketClient;
+import io.vantiq.extjsdk.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 
-import static io.vantiq.ext.sdk.ConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
-import static io.vantiq.ext.sdk.ConnectorConstants.RECONNECT_INTERVAL;
+import static io.vantiq.extjsdk.ConnectorConstants.CONNECTOR_CONNECT_TIMEOUT;
+import static io.vantiq.extjsdk.ConnectorConstants.RECONNECT_INTERVAL;
+
 
 public class CloseHandler extends Handler<ExtensionWebSocketClient> {
 
@@ -31,8 +32,8 @@ public class CloseHandler extends Handler<ExtensionWebSocketClient> {
         // reconnect
         boolean sourcesSucceeded = false;
         while (!sourcesSucceeded) {
-            client.initiateFullConnection(connector.getVantiqUrl(), connector.getVantiqToken());
-            sourcesSucceeded = connector.checkConnectionFails(client, CONNECTOR_CONNECT_TIMEOUT);
+            client.initiateFullConnection(connector.getConnectionInfo().getVantiqUrl(), connector.getConnectionInfo().getToken());
+            sourcesSucceeded = connector.getVantiqClient().checkConnectionFails(CONNECTOR_CONNECT_TIMEOUT);
             if (!sourcesSucceeded) {
                 try {
                     Thread.sleep(RECONNECT_INTERVAL);
